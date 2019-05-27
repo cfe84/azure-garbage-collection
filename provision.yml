@@ -1,0 +1,6 @@
+deployment:
+  resources:
+  - type: functionApp
+    appRegistration: default
+  - type: appRegistration
+    functionApp: default
