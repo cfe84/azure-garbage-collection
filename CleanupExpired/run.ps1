@@ -2,6 +2,7 @@ param($Timer)
 $date=Get-Date
 
 Write-Host "Garbage collection triggered at $date"
+Select-AzSubscription -Subscription $env:SUBSCRIPTION
 $expiredResources = Get-AzResourceGroup | Where-Object { $_.Tags.expiry -and [DateTime] $_.Tags.expiry -lt $date }
 Foreach ($resourceGroup in $expiredResources) {
     Write-Host "Collecting $($resourceGroup.ResourceGroupName)"
