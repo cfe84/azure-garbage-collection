@@ -3,6 +3,7 @@
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "powershell",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "SUBSCRIPTION": "PreliminaryPudding"
+    "SUBSCRIPTION": "PreliminaryPudding",
+    "DEFAULT_EXPIRY_DAYS": "14"
   }
 }

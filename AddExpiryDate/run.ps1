@@ -1,6 +1,7 @@
 param($Timer)
 $date=Get-Date
-$expiryDate=$date.AddDays(14).ToString("yyyy-MM-dd")
+$defaultExpiryDays=[int]$env:DEFAULT_EXPIRY_DAYS
+$expiryDate=$date.AddDays($defaultExpiryDays).ToString("yyyy-MM-dd")
 
 Write-Host "Expiry date fixing triggered at $date"
 Select-AzSubscription -Subscription $env:SUBSCRIPTION
