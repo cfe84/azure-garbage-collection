@@ -3,35 +3,6 @@
 PWD=`pwd`
 random() { size=$1; echo -n `date +%s%N | sha256sum | base64 | head -c $size`;}
 
-
-if [ ! -f env.sh ]; then
-    echo "#!/bin/bash
-
-NAME='`basename "$PWD"`'
-LOCATION=\"westus2\"
-RANDOMBASE=\"`random 5`\"
-STORAGEBASENAME=\"`echo -n $NAME | head -c 15`$RANDOMBASE\"
-SUBSCRIPTIONID=\"`az account show --query id -o tsv`\"
-SUBSCRIPTION_RESOURCE_ID=\"/subscriptions/$SUBSCRIPTIONID\"
-TENANTID=`az  account show --query tenantId -o tsv`
-
-DEFAULT_RESOURCE_GROUP=\"$NAME\"
-DEFAULT_RESOURCE_GROUP_RESOURCE_ID=\"$SUBSCRIPTION_RESOURCE_ID/resourceGroups/$DEFAULT_RESOURCE_GROUP\"
-DEFAULT_STORAGE_ACCOUNT=\"`echo \"$STORAGEBASENAME\" | sed -e 's/-//g' | sed -E 's/^(.*)$/\L\1/g' | head -c 20`def\"
-DEFAULT_STORAGE_ACCOUNT_RESOURCE_ID=\"$DEFAULT_RESOURCE_GROUP_RESOURCE_ID/providers/Microsoft.Storage/storageAccounts/$DEFAULT_STORAGE_ACCOUNT\"
-DEFAULT_FUNCTIONAPP=\"$NAME-`random 5`\"
-DEFAULT_FUNCTIONAPP_HOSTNAME=\"https://$DEFAULT_FUNCTIONAPP.azurewebsites.net\"
-" > env.sh
-fi
-
-
-source env.sh
-
-usage() {
-    echo "Usage: `basename "$0"` [--name $NAME] [--location $LOCATION]"
-    exit 1
-}
-
 while [[ $# -gt 0 ]]
 do
     key="$1"
@@ -55,11 +26,43 @@ done
 
 
 
+if [ ! -f env.sh ]; then
+    echo "#!/bin/bash
+
+NAME='`basename "$PWD"`'
+LOCATION=\"westus2\"
+RANDOMBASE=\"`random 5`\"
+RANDOMBASE16CHAR=\"`random 16`\"
+STORAGEBASENAME=\"`echo -n $NAME | head -c 15`$RANDOMBASE\"
+SUBSCRIPTIONID=\"`az account show --query id -o tsv`\"
+SUBSCRIPTION_RESOURCE_ID=\"/subscriptions/$SUBSCRIPTIONID\"
+TENANTID=`az  account show --query tenantId -o tsv`
+" > env.sh
+fi
+
+
+source env.sh
+
+usage() {
+    echo "Usage: `basename "$0"` [--name $NAME] [--location $LOCATION]"
+    exit 1
+}
+
+
+
+
 
 echo "This will provision the following resources: "
 echo "ResourceGroup (default)"
 echo "StorageAccount (default)"
 echo "FunctionApp (default)"
+
+DEFAULT_RESOURCE_GROUP="$NAME"
+DEFAULT_RESOURCE_GROUP_RESOURCE_ID="$SUBSCRIPTION_RESOURCE_ID/resourceGroups/$DEFAULT_RESOURCE_GROUP"
+DEFAULT_STORAGE_ACCOUNT="`echo "$STORAGEBASENAME" | sed -e 's/-//g' | sed -E 's/^(.*)$/\L\1/g' | head -c 20`def"
+DEFAULT_STORAGE_ACCOUNT_RESOURCE_ID="$DEFAULT_RESOURCE_GROUP_RESOURCE_ID/providers/Microsoft.Storage/storageAccounts/$DEFAULT_STORAGE_ACCOUNT"
+DEFAULT_FUNCTIONAPP="$NAME-$RANDOMBASE"
+DEFAULT_FUNCTIONAPP_HOSTNAME="https://$DEFAULT_FUNCTIONAPP.azurewebsites.net"
 
 echo "Creating resource group $DEFAULT_RESOURCE_GROUP"
 az group create --name $DEFAULT_RESOURCE_GROUP --location $LOCATION --query "properties.provisioningState" -o tsv
