@@ -1,8 +1,11 @@
 deployment:
   resources:
+  - type: appRegistration
+    functionApp: default
   - type: functionApp
     deploy: true
     identityScope: $SUBSCRIPTIONID
     settings:
-    - "SUBSCRIPTION=$SUBSCRIPTIONID"
+    - "SUBSCRIPTION=$SUBSCRIPTION_RESOURCE_ID"
     - "DEFAULT_EXPIRY_DAYS=14"
+    appRegistration: default
