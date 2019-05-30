@@ -4,6 +4,7 @@
     "FUNCTIONS_WORKER_RUNTIME": "powershell",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "SUBSCRIPTION": "PreliminaryPudding",
+    "DEFAULT_TAG": "experiment",
     "DEFAULT_EXPIRY_DAYS": "14"
   }
 }

@@ -8,4 +8,5 @@ deployment:
     settings:
     - "SUBSCRIPTION=$SUBSCRIPTION_RESOURCE_ID"
     - "DEFAULT_EXPIRY_DAYS=14"
+    - "DEFAULT_TAG=experiment"
     appRegistration: default
