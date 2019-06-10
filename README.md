@@ -1,4 +1,6 @@
-A set of two powershell functions:
+A set of powershell functions:
+
+- **Add purpose** is running every hour, picking all resource groups without a tag `purpose` and trying to apply a default tag based on resource group name.
 
 - **AddExpiryDate** is running every hour,  picking all resource groups with a tag `purpose` set to `experiment`. If there's no expiry date, it's setting one to 14 days from now (can be configured in the app settings by modifying setting `DEFAULT_EXPIRY_DAYS`).
 
