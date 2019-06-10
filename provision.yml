@@ -4,6 +4,33 @@ deployment:
     deploy: true
     identityScope: $SUBSCRIPTION_RESOURCE_ID
     settings:
-    - "SUBSCRIPTION=$SUBSCRIPTIONID"
-    - "DEFAULT_EXPIRY_DAYS=14"
-    - "DEFAULT_TAG=experiment"
+    - SUBSCRIPTION=$SUBSCRIPTIONID
+    - DEFAULT_EXPIRY_DAYS=14
+    - DEFAULT_TAG=experiment
+  - type: Snippet
+  - type: storageAccount
+    queues:
+    - events
+  - type: snippet
+    name: Grab account key
+    provisioning: |
+      read -p "Email address to receive notifications > " SEND_NOTIFICATIONS_TO
+      echo "Getting account key for $DEFAULT_STORAGE_ACCOUNT"
+      DEFAULT_STORAGE_ACCOUNT_KEY=`az storage account keys list -n $DEFAULT_STORAGE_ACCOUNT --query "[0].value" -o tsv`
+    summary: |
+      echo "You need to authenticate API connections for Dynamics and Azure Devops before logicapps can run."
+    order: 5
+  - type: deployment
+    name: logicapp-apis
+    file: logicapps/apis.json
+    parameters:
+    - location=$LOCATION
+    - storageAccountName=$DEFAULT_STORAGE_ACCOUNT
+    - storageAccountKey=$DEFAULT_STORAGE_ACCOUNT_KEY
+  - type: deployment
+    file: logicapps/logicapp-notification.json
+    name: logicapp-notification
+    parameters:
+    - location=$LOCATION
+    - name=prod-garbage-collection-notification
+    - send_notifications_to=$SEND_NOTIFICATIONS_TO

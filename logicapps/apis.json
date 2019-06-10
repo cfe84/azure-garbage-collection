@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "westus2"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        
+        "storageAccountKey": {
+            "type": "securestring"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "azurequeues",
+            "location": "[parameters('location')]",
+            "properties": {
+                "displayName": "azurequeues",
+                "parameterValues": {
+                    "storageaccount": "[parameters('storageAccountName')]",
+                    "sharedkey": "[parameters('storageAccountKey')]"
+                },
+                "api": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location , '/managedApis/azurequeues')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "office365",
+            "location": "[parameters('location')]",
+            "properties": {
+                "displayName": "office365",
+                "api": {
+                    "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location , '/managedApis/office365')]"
+                }
+            }
+        }
+    ]
+}

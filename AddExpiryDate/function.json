@@ -4,7 +4,13 @@
       "name": "Timer",
       "type": "timerTrigger",
       "direction": "in",
-      "schedule": "0 5 * * * *"
+      "schedule": "0 8 * * * *"
+    },
+    {
+      "name": "eventsQueue",
+      "type": "queue",
+      "direction": "out",
+      "queueName": "events"
     }
   ]
 }

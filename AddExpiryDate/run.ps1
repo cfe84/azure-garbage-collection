@@ -11,5 +11,13 @@ Foreach ($resourceGroup in $untouchedResources) {
     $tags = $resourceGroup.Tags
     $tags.Add("expiry", $expiryDate)
     Set-AzResourceGroup -Tag $tags -Name $resourceGroup.ResourceGroupName
+    $evt = [ordered]@{
+        type="expiryAdded"
+        group=$resourceGroup.ResourceGroupName
+        expiry=$expiryDate
+        date=$date
+    }
+    $jsonEvent = $evt | ConvertTo-Json -Depth 10
+    Push-OutputBinding -Name "eventsQueue" -Value $jsonEvent
 }
 Write-Host "Done adding expiry date"

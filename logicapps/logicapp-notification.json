@@ -1,0 +1,296 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "defaultValue": "prod-garbage-collection-notification",
+      "type": "String"
+    },
+    "location": {
+      "defaultValue": "westus2",
+      "type": "String"
+    },
+    "send_notifications_to": {
+      "type": "String"
+    },
+    "connections_azurequeues_externalid": {
+      "defaultValue": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/azurequeues')]",
+      "type": "String"
+    },
+    "connections_office365_externalid": {
+      "defaultValue": "[concat(resourceGroup().id, '/providers/Microsoft.Web/connections/office365')]",
+      "type": "String"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2017-07-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_there_are_messages_in_a_queue": {
+              "recurrence": {
+                "frequency": "Minute",
+                "interval": 3
+              },
+              "splitOn": "@triggerBody()?['QueueMessagesList']?['QueueMessage']",
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azurequeues']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/@{encodeURIComponent('events')}/message_trigger"
+              }
+            }
+          },
+          "actions": {
+            "Delete_message": {
+              "runAfter": {
+                "Send_an_email_(V2)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azurequeues']['connectionId']"
+                  }
+                },
+                "method": "delete",
+                "path": "/@{encodeURIComponent('events')}/messages/@{encodeURIComponent(triggerBody()?['MessageId'])}",
+                "queries": {
+                  "popreceipt": "@triggerBody()?['PopReceipt']"
+                }
+              }
+            },
+            "Initialize_message": {
+              "runAfter": {
+                "Parse_JSON": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "message",
+                    "type": "String"
+                  }
+                ]
+              }
+            },
+            "Initialize_subject": {
+              "runAfter": {
+                "Initialize_message": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "subject",
+                    "type": "String"
+                  }
+                ]
+              }
+            },
+            "Parse_JSON": {
+              "runAfter": {},
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@triggerBody()?['MessageText']",
+                "schema": {
+                  "properties": {
+                    "date": {
+                      "type": "string"
+                    },
+                    "expiry": {
+                      "type": "string"
+                    },
+                    "group": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "Send_an_email_(V2)": {
+              "runAfter": {
+                "Switch_(event_type)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "ApiConnection",
+              "inputs": {
+                "body": {
+                  "Body": "<p>Hello,<br>\n<br>\nThe following automatic operation happened at @{body('Parse_JSON')?['date']}:<br>\n<br>\n@{variables('message')}<br>\n<br>\nCheers,<br>\nAzure Garbageman</p>",
+                  "Subject": "Azure Garbage Collection | @{variables('subject')}",
+                  "To": "@parameters('send_notifications_to')"
+                },
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['office365']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/v2/Mail"
+              }
+            },
+            "Switch_(event_type)": {
+              "runAfter": {
+                "Initialize_subject": [
+                  "Succeeded"
+                ]
+              },
+              "cases": {
+                "Expiry_added": {
+                  "case": "expiryAdded",
+                  "actions": {
+                    "Append_to_string_variable": {
+                      "runAfter": {
+                        "Set_variable_for_expiry_added": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "message",
+                        "value": "Group \"@{body('Parse_JSON')?['group']}\" will expire on \"@{body('Parse_JSON')?['expiry']}\". \n\nGroup will then be automatically garbage collected. This happened because the group was marked as an experiment and expiry date was missing."
+                      }
+                    },
+                    "Set_variable_for_expiry_added": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "subject",
+                        "value": "Expiry was added to group \"@{body('Parse_JSON')?['group']}\""
+                      }
+                    }
+                  }
+                },
+                "Group_collected": {
+                  "case": "groupCollected",
+                  "actions": {
+                    "Set_message_for_group_collected": {
+                      "runAfter": {
+                        "Set_subject_for_group_collected": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "message",
+                        "value": "Group \"@{body('Parse_JSON')?['group']}\" was automatically garbage collected at @{body('Parse_JSON')?['date']}"
+                      }
+                    },
+                    "Set_subject_for_group_collected": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "subject",
+                        "value": "Group \"@{body('Parse_JSON')?['group']}\" was garbage collected"
+                      }
+                    }
+                  }
+                },
+                "Purpose_Added": {
+                  "case": "purposeAdded",
+                  "actions": {
+                    "Set_message_for_purpose_added": {
+                      "runAfter": {
+                        "Set_subject_for_purpose_added": [
+                          "Succeeded"
+                        ]
+                      },
+                      "type": "AppendToStringVariable",
+                      "inputs": {
+                        "name": "message",
+                        "value": "Purpose for group \"@{body('Parse_JSON')?['group']}\" was missing and automatically set to \"@{body('Parse_JSON')?['purpose']}\""
+                      }
+                    },
+                    "Set_subject_for_purpose_added": {
+                      "runAfter": {},
+                      "type": "SetVariable",
+                      "inputs": {
+                        "name": "subject",
+                        "value": "Purpose added to group \"@{body('Parse_JSON')?['group']}\""
+                      }
+                    }
+                  }
+                }
+              },
+              "default": {
+                "actions": {
+                  "Set_message_for_default": {
+                    "runAfter": {
+                      "Set_variable_for_unknown": [
+                        "Succeeded"
+                      ]
+                    },
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "message",
+                      "value": "Full event: @{triggerBody()?['MessageText']}"
+                    }
+                  },
+                  "Set_variable_for_unknown": {
+                    "runAfter": {},
+                    "type": "SetVariable",
+                    "inputs": {
+                      "name": "subject",
+                      "value": "Unknown event type: @{body('Parse_JSON')?['type']}"
+                    }
+                  }
+                }
+              },
+              "expression": "@body('Parse_JSON')?['type']",
+              "type": "Switch"
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azurequeues": {
+                "connectionId": "[parameters('connections_azurequeues_externalid')]",
+                "connectionName": "azurequeues",
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azurequeues')]"
+              },
+              "office365": {
+                "connectionId": "[parameters('connections_office365_externalid')]",
+                "connectionName": "office365",
+                "id": "[concat(subscription().id, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/office365')]"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -39,5 +39,13 @@ Foreach ($resourceGroup in $untaggedResources) {
         $tags.Add("purpose", $tagToApply)
     }
     Set-AzResourceGroup -Tag $tags -Name $resourceGroup.ResourceGroupName
+    $evt = [ordered]@{
+        type="purposeAdded"
+        group=$resourceGroup.ResourceGroupName
+        purpose=$tagToApply
+        date=$date
+    }
+    $jsonEvent = $evt | ConvertTo-Json -Depth 10
+    Push-OutputBinding -Name "eventsQueue" -Value $jsonEvent
 }
 Write-Host "Done adding tags"
