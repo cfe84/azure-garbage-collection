@@ -43,8 +43,8 @@
           "triggers": {
             "When_there_are_messages_in_a_queue": {
               "recurrence": {
-                "frequency": "Minute",
-                "interval": 3
+                "frequency": "Hour",
+                "interval": 1
               },
               "splitOn": "@triggerBody()?['QueueMessagesList']?['QueueMessage']",
               "type": "ApiConnection",
