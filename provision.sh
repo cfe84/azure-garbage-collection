@@ -84,7 +84,7 @@ az storage queue create --name "events" --account-name $DEFAULT_STORAGE_ACCOUNT 
 
 echo "Creating functionapp $DEFAULT_FUNCTIONAPP"
 az functionapp create -g $DEFAULT_RESOURCE_GROUP --consumption-plan-location $LOCATION --name $DEFAULT_FUNCTIONAPP --storage-account $DEFAULT_STORAGE_ACCOUNT --query "state" -o tsv
-az functionapp config appsettings set --name $DEFAULT_FUNCTIONAPP -g $DEFAULT_RESOURCE_GROUP --settings SUBSCRIPTION=$SUBSCRIPTIONID DEFAULT_EXPIRY_DAYS=14 DEFAULT_TAG=experiment > /dev/null
+az functionapp config appsettings set --name $DEFAULT_FUNCTIONAPP -g $DEFAULT_RESOURCE_GROUP --settings SUBSCRIPTION=$SUBSCRIPTIONID DEFAULT_EXPIRY_DAYS=14 DEFAULT_WARNING_DAYS=1 DEFAULT_TAG=experiment > /dev/null
 echo "Configuring identity for functionapp $DEFAULT_FUNCTIONAPP with contributor access to scope $SUBSCRIPTION_RESOURCE_ID."
 DEFAULT_FUNCTIONAPP_PRINCIPALID=`az functionapp identity assign --name $DEFAULT_FUNCTIONAPP --resource-group $DEFAULT_RESOURCE_GROUP --role contributor --scope "$SUBSCRIPTION_RESOURCE_ID" --query principalId -o tsv`
 echo "Deploying function app $DEFAULT_FUNCTIONAPP"

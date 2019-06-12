@@ -6,6 +6,7 @@ deployment:
     settings:
     - SUBSCRIPTION=$SUBSCRIPTIONID
     - DEFAULT_EXPIRY_DAYS=14
+    - DEFAULT_WARNING_DAYS=1
     - DEFAULT_TAG=experiment
   - type: Snippet
   - type: storageAccount

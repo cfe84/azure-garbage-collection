@@ -193,6 +193,31 @@
                     }
                   }
                 },
+                "Group_about_to_be_collected": {
+                    "case": "groupAboutToBeCollected",
+                    "actions": {
+                        "Set_message_for_groups_about_to_be_collected": {
+                            "runAfter": {
+                                "Set_subject_for_groups_about_to_be_collected": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "AppendToStringVariable",
+                            "inputs": {
+                                "name": "message",
+                                "value": "Group \"@{body('Parse_JSON')?['group']}\" will be automatically garbage collected on @{body('Parse_JSON')?['expiry']}"
+                            }
+                        },
+                        "Set_subject_for_groups_about_to_be_collected": {
+                            "runAfter": {},
+                            "type": "SetVariable",
+                            "inputs": {
+                                "name": "subject",
+                                "value": "Group \"@{body('Parse_JSON')?['group']}\" will be collected soon"
+                            }
+                        }
+                    }
+                },
                 "Group_collected": {
                   "case": "groupCollected",
                   "actions": {
