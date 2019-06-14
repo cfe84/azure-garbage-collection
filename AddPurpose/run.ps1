@@ -30,7 +30,10 @@ Foreach ($resourceGroup in $untaggedResources) {
     } elseif ($groupName -match 'exp*' `
         -or $groupName -match 'garbage*') {
         $tagToApply = "experiment"
-    }
+    } elseif ($groupName -match 'demo*' `
+    -or $groupName -match 'poc*') {
+    $tagToApply = "demo"
+}
     Write-Host "Apply tag $tagToApply to group $groupName"
     $tags = $resourceGroup.Tags
     if (! $tags) {
