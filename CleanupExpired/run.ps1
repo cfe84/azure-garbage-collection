@@ -19,7 +19,7 @@ Write-Host "Done collecting"
 
 Write-Host "Warning about tomorrow's collection"
 $defaultWarningDays=[int]$env:DEFAULT_WARNING_DAYS
-$tomorrow=$date.AddDays($defaultWarningDays)
+$tomorrow=$date.AddDays(-$defaultWarningDays)
 $resourcesAlmostExpired = Get-AzResourceGroup | Where-Object { $_.Tags.expiry -and [DateTime] $_.Tags.expiry -lt $tomorrow }
 Foreach ($resourceGroup in $resourcesAlmostExpired) {
     $evt = [ordered]@{
